@@ -10,11 +10,12 @@ const CONFIG = {
   // Định dạng: "NĂM-THÁNG-NGÀYTGiờ:Phút:Giây"
   weddingDate: "2026-11-14T18:00:00",
 
-  // Nơi nhận xác nhận tham dự (RSVP).
+  // Nơi nhận xác nhận tham dự (RSVP) — lưu vào Google Sheet.
+  // Dán "URL ứng dụng web" của Google Apps Script vào đây (kết thúc bằng /exec).
+  //   Ví dụ: "https://script.google.com/macros/s/AKfycb.../exec"
+  // Hướng dẫn: xem README.md, mục "Lưu xác nhận vào Google Sheet".
   // Để trống "" thì form vẫn chạy (hiện lời cảm ơn) nhưng KHÔNG lưu lại.
-  // Cách lưu thật: tạo form miễn phí tại https://formspree.io rồi dán link vào đây.
-  //   Ví dụ: "https://formspree.io/f/abcdwxyz"
-  rsvpEndpoint: "",
+  rsvpEndpoint: "https://script.google.com/macros/s/AKfycbzMKlnoIbjilDAZHJbM87_TeKlIPaPgKFDnepkzNHEQ2LbDdxgqmnWgZKX9QSIhQfSkRg/exec",
 };
 
 /* ════════════════════ Dưới đây là phần xử lý, không cần sửa ════════════════════ */
@@ -159,12 +160,14 @@ const CONFIG = {
 
     try {
       if (CONFIG.rsvpEndpoint) {
-        const res = await fetch(CONFIG.rsvpEndpoint, {
+        // Gửi dạng form thường (không header tuỳ chỉnh) để Google Apps Script nhận được
+        // mà không bị chặn CORS. "no-cors" nên không đọc được phản hồi — nếu mạng lỗi
+        // thì fetch sẽ báo lỗi và hiện thông báo bên dưới.
+        await fetch(CONFIG.rsvpEndpoint, {
           method: "POST",
-          headers: { Accept: "application/json", "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          mode: "no-cors",
+          body: new URLSearchParams(data),
         });
-        if (!res.ok) throw new Error("fail");
       } else {
         // Chưa cấu hình nơi lưu — mô phỏng gửi thành công
         await new Promise((r) => setTimeout(r, 600));
@@ -179,5 +182,70 @@ const CONFIG = {
     } finally {
       btn.disabled = false;
     }
+  });
+})();
+
+/* ── 8. Album — nhấn vào ảnh để xem phóng to ── */
+(function lightbox() {
+  const imgs = Array.from(document.querySelectorAll(".gallery-item img"));
+  if (!imgs.length) return;
+
+  const box = document.createElement("div");
+  box.className = "lightbox";
+  box.setAttribute("role", "dialog");
+  box.setAttribute("aria-modal", "true");
+  box.setAttribute("aria-label", "Xem ảnh");
+  box.innerHTML = `
+    <button class="lb-btn lb-close" aria-label="Đóng">✕</button>
+    <button class="lb-btn lb-prev" aria-label="Ảnh trước">‹</button>
+    <img class="lb-img" alt="" />
+    <button class="lb-btn lb-next" aria-label="Ảnh sau">›</button>
+    <div class="lb-count"></div>`;
+  document.body.appendChild(box);
+
+  const view = box.querySelector(".lb-img");
+  const count = box.querySelector(".lb-count");
+  let index = 0;
+
+  function show(i) {
+    index = (i + imgs.length) % imgs.length;
+    view.src = imgs[index].currentSrc || imgs[index].src;
+    view.alt = imgs[index].alt;
+    count.textContent = `${index + 1} / ${imgs.length}`;
+  }
+  function open(i) {
+    show(i);
+    box.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+  function close() {
+    box.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  imgs.forEach((img, i) => {
+    img.parentElement.style.cursor = "zoom-in";
+    img.parentElement.addEventListener("click", () => open(i));
+  });
+  box.querySelector(".lb-close").addEventListener("click", close);
+  box.querySelector(".lb-prev").addEventListener("click", (e) => { e.stopPropagation(); show(index - 1); });
+  box.querySelector(".lb-next").addEventListener("click", (e) => { e.stopPropagation(); show(index + 1); });
+  box.addEventListener("click", (e) => { if (e.target === box) close(); }); // nhấn ra ngoài ảnh để đóng
+
+  document.addEventListener("keydown", (e) => {
+    if (!box.classList.contains("open")) return;
+    if (e.key === "Escape") close();
+    if (e.key === "ArrowLeft") show(index - 1);
+    if (e.key === "ArrowRight") show(index + 1);
+  });
+
+  // Vuốt trái/phải trên điện thoại để chuyển ảnh
+  let startX = null;
+  box.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
+  box.addEventListener("touchend", (e) => {
+    if (startX === null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) show(index + (dx < 0 ? 1 : -1));
+    startX = null;
   });
 })();

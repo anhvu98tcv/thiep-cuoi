@@ -10,6 +10,7 @@ thiep-cuoi/
 ├── index.html      → Nội dung trang (tên, lời mời, sự kiện...)
 ├── css/style.css   → Giao diện, màu sắc, bố cục
 ├── js/main.js      → Đếm ngược, hiệu ứng, form xác nhận
+├── google-apps-script/Code.gs → Script lưu xác nhận vào Google Sheet
 └── assets/         → Nơi để ảnh, nhạc nền, mã QR
 ```
 
@@ -44,16 +45,27 @@ Chép một file nhạc vào `assets/music.mp3`. Khách bấm nút ♪ góc dư�
 ### 5. Màu sắc
 Mở `css/style.css`, phần `:root` ở đầu file có thể đổi toàn bộ tông màu.
 
-## 📥 Thu thập xác nhận tham dự (RSVP) thật
+## 📥 Lưu xác nhận vào Google Sheet
 
-Mặc định form chỉ hiện lời cảm ơn. Để **lưu lại** danh sách khách:
-1. Vào [formspree.io](https://formspree.io) → đăng ký miễn phí → tạo một form mới.
-2. Copy link dạng `https://formspree.io/f/xxxxxxx`.
-3. Mở `js/main.js`, dán vào:
+Mặc định form chỉ hiện lời cảm ơn. Để mỗi lần khách bấm **Gửi xác nhận** là có thêm một dòng trong Google Sheet:
+
+1. Tạo một Google Sheet mới (ví dụ tên *Khách mời đám cưới*).
+2. Trong Sheet: **Tiện ích mở rộng → Apps Script**.
+3. Xoá hết code mẫu, dán toàn bộ nội dung file `google-apps-script/Code.gs`, bấm **Lưu** 💾.
+4. Bấm **Triển khai → Tùy chọn triển khai mới** → biểu tượng ⚙️ chọn **Ứng dụng web**:
+   - *Thực thi với tư cách:* **Tôi**
+   - *Người có quyền truy cập:* **Bất kỳ ai**
+   - Bấm **Triển khai** → **Cấp quyền truy cập** → chọn tài khoản Google
+     (nếu hiện "Google chưa xác minh ứng dụng này": **Nâng cao → Đi tới ... (không an toàn)** → **Cho phép**; đây là script của chính bạn).
+5. Copy **URL ứng dụng web** (dạng `https://script.google.com/macros/s/.../exec`).
+6. Mở `js/main.js`, dán vào:
    ```js
-   rsvpEndpoint: "https://formspree.io/f/xxxxxxx",
+   rsvpEndpoint: "https://script.google.com/macros/s/.../exec",
    ```
-Từ đó mọi xác nhận sẽ gửi về email / bảng quản lý của Formspree.
+7. Mở thiệp, gửi thử một xác nhận → trong Sheet sẽ xuất hiện trang tính **RSVP** với các cột
+   *Thời gian, Họ và tên, Số điện thoại, Tham dự, Số người, Lời chúc*.
+
+> Nếu sau này sửa code trong Apps Script, phải vào **Triển khai → Quản lý các bản triển khai → ✏️ → Phiên bản: Mới → Triển khai** thì thay đổi mới có hiệu lực (URL giữ nguyên).
 
 ## 👀 Xem thử trên máy
 Nhấp đúp `index.html` để mở bằng trình duyệt. (Nếu cần máy chủ cục bộ:
