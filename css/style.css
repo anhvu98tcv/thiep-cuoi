@@ -560,6 +560,51 @@ body {
 .music-toggle.playing .music-icon { animation: spin 3s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Trình phát nhạc YouTube ẩn (đặt ngoài màn hình nhưng vẫn phát được tiếng) */
+.yt-music { position: fixed; left: -9999px; top: -9999px; width: 200px; height: 120px; opacity: 0.001; pointer-events: none; }
+
+/* ─────────────── Màn bìa "Mở thiệp" ─────────────── */
+.intro-cover {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  padding: 28px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(231,183,186,0.55), transparent 55%),
+    radial-gradient(circle at 80% 70%, rgba(156,175,136,0.45), transparent 55%),
+    linear-gradient(160deg, #fbeee6 0%, #f6e4e2 45%, #eef0e3 100%);
+  transition: opacity 0.9s ease, visibility 0.9s ease;
+}
+.intro-cover.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.intro-cover-inner { max-width: 860px; animation: coverIn 1s ease both; }
+@keyframes coverIn { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+.intro-cover-eyebrow {
+  font-family: var(--font-serif); font-style: italic; letter-spacing: 4px;
+  text-transform: uppercase; font-size: 0.8rem; color: var(--gold); margin-bottom: 14px;
+}
+.intro-cover-ring { font-size: 2.4rem; margin-bottom: 4px; }
+.intro-cover-names {
+  font-family: var(--font-script); font-weight: 700; color: var(--rose-deep);
+  font-size: clamp(2.3rem, 8vw, 4.2rem); line-height: 1.15; margin-bottom: 14px;
+  text-wrap: balance;
+}
+.intro-cover-names span { font-family: var(--font-serif); font-style: italic; color: var(--gold); font-size: 0.5em; }
+.intro-cover-sub { color: var(--muted); font-size: 1.02rem; margin-bottom: 30px; }
+.intro-open {
+  font-family: var(--font-body); font-weight: 500; font-size: 1rem; letter-spacing: 0.3px;
+  color: #fff; border: none; cursor: pointer;
+  padding: 15px 42px; border-radius: 999px;
+  background: linear-gradient(135deg, var(--rose), var(--rose-deep));
+  box-shadow: 0 14px 30px -12px rgba(169, 104, 108, 0.75);
+  animation: openPulse 2s ease-in-out infinite;
+  transition: transform 0.25s ease;
+}
+.intro-open:hover { transform: translateY(-2px); }
+@keyframes openPulse {
+  0%,100% { box-shadow: 0 14px 30px -12px rgba(169,104,108,0.75); transform: scale(1); }
+  50% { box-shadow: 0 16px 42px -8px rgba(169,104,108,0.95); transform: scale(1.03); }
+}
+body.cover-open { overflow: hidden; }
+
 /* ─────────────── Cánh hoa rơi ─────────────── */
 .petals { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
 .petal {
@@ -595,4 +640,9 @@ body {
   .gallery-item:first-child { grid-row: auto; aspect-ratio: 4 / 5; }
   .count-box { min-width: 70px; padding: 16px 6px; }
   .count-num { font-size: 2rem; }
+
+  /* Chữ chạy tự nhiên, bỏ ngắt dòng cố định để không bị chữ lẻ trên màn hình hẹp */
+  .intro-text { font-size: 1.02rem; line-height: 1.85; }
+  .gift-message { font-size: 0.98rem; }
+  .intro-text br, .gift-message br { display: none; }
 }

@@ -39,8 +39,12 @@ Chép ảnh vào thư mục `assets/` (ví dụ `anh-cuoi-1.jpg`), rồi trong `
 - **Mã QR:** thay `<div class="gift-qr" data-label="QR chuyển khoản"></div>`
   bằng `<div class="gift-qr"><img src="assets/qr-chu-re.png" alt="" /></div>`
 
-### 4. Nhạc nền (tuỳ chọn)
-Chép một file nhạc vào `assets/music.mp3`. Khách bấm nút ♪ góc dưới phải để nghe.
+### 4. Nhạc nền (phát từ YouTube)
+Nhạc nền phát từ một video YouTube (mặc định: *Em Đồng Ý (I Do) – Đức Phúc x 911*).
+Để đổi bài: mở `js/main.js`, sửa `musicYoutubeId` thành **mã video** — phần đứng sau
+`watch?v=` trong link YouTube (ví dụ `https://www.youtube.com/watch?v=pBTp2RWxq-s` → `pBTp2RWxq-s`).
+Nhạc tự phát khi khách chạm/cuộn vào trang; nút ♪ góc dưới phải để tắt/mở. Nếu video bạn
+chọn không cho nhúng, nút nhạc sẽ tự ẩn — hãy chọn video khác.
 
 ### 5. Màu sắc
 Mở `css/style.css`, phần `:root` ở đầu file có thể đổi toàn bộ tông màu.
