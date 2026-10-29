@@ -17,10 +17,8 @@ const CONFIG = {
   // Để trống "" thì form vẫn chạy (hiện lời cảm ơn) nhưng KHÔNG lưu lại.
   rsvpEndpoint: "https://script.google.com/macros/s/AKfycbzMKlnoIbjilDAZHJbM87_TeKlIPaPgKFDnepkzNHEQ2LbDdxgqmnWgZKX9QSIhQfSkRg/exec",
 
-  // Nhạc nền phát từ YouTube — dán MÃ VIDEO (phần sau "watch?v=" trong link YouTube).
-  //   Ví dụ link https://www.youtube.com/watch?v=pBTp2RWxq-s  →  "pBTp2RWxq-s"
-  // Mặc định: "Em Đồng Ý (I Do)" - Đức Phúc x 911. Để trống "" nếu không muốn nhạc.
-  musicYoutubeId: "pBTp2RWxq-s",
+  // Nhạc nền: đặt file nhạc vào assets/music.mp3 (đúng tên, chữ thường).
+  // Không có file thì nút ♪ tự ẩn, thiệp vẫn chạy bình thường.
 };
 
 /* ════════════════════ Dưới đây là phần xử lý, không cần sửa ════════════════════ */
@@ -110,95 +108,59 @@ const CONFIG = {
   }
 })();
 
-/* ── 5. Nhạc nền phát từ YouTube (bài "I Do") ── */
+/* ── 5. Nhạc nền (file mp3 — không dùng YouTube để điện thoại không bật trình phát video) ── */
 (function music() {
   const btn = document.getElementById("musicToggle");
-  const mount = document.getElementById("ytPlayer");
-  const videoId = CONFIG.musicYoutubeId;
-  if (!btn || !mount || !videoId) return;
+  const audio = document.getElementById("bgMusic");
+  if (!btn || !audio) return;
 
-  let player = null;
-  let ready = false;
-  let playing = false;
   let userPaused = false;
-  let wantPlay = false;
+  audio.volume = 0.8;
 
-  function setPlaying(v) {
-    playing = v;
-    btn.classList.toggle("playing", v);
-  }
+  const setPlaying = (v) => btn.classList.toggle("playing", v);
+  audio.addEventListener("play", () => setPlaying(true));
+  audio.addEventListener("pause", () => setPlaying(false));
+  // Không tìm thấy file nhạc → ẩn nút ♪
+  const hideBtn = () => { btn.style.display = "none"; };
+  audio.addEventListener("error", hideBtn);
+  if (audio.error) hideBtn(); // lỗi xảy ra trước khi script chạy
+
   function play() {
-    wantPlay = true;
-    if (ready && player) player.playVideo();
-  }
-  function pause() {
-    wantPlay = false;
-    if (ready && player) player.pauseVideo();
+    if (userPaused) return;
+    const p = audio.play();
+    if (p && p.catch) p.catch(() => {}); // trình duyệt chặn thì bỏ qua êm ái
   }
 
   // Cho màn bìa "Mở thiệp" gọi để phát nhạc đúng lúc khách bấm vào.
   window.__playMusic = play;
 
-  function initPlayer() {
-    player = new YT.Player(mount, {
-      videoId: videoId,
-      playerVars: {
-        autoplay: 0, controls: 0, loop: 1, playlist: videoId,
-        modestbranding: 1, rel: 0, playsinline: 1,
-      },
-      events: {
-        onReady: () => {
-          ready = true;
-          if (wantPlay && !userPaused) player.playVideo();
-        },
-        onStateChange: (e) => {
-          if (e.data === YT.PlayerState.PLAYING) setPlaying(true);
-          else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) setPlaying(false);
-        },
-        onError: () => {
-          // Video này không cho nhúng / không phát được → ẩn nút nhạc.
-          // Hãy đổi CONFIG.musicYoutubeId sang một video khác.
-          btn.style.display = "none";
-        },
-      },
-    });
-  }
-
-  // Nạp YouTube IFrame API (một lần) rồi khởi tạo trình phát.
-  const prevReady = window.onYouTubeIframeAPIReady;
-  window.onYouTubeIframeAPIReady = () => {
-    if (typeof prevReady === "function") prevReady();
-    initPlayer();
-  };
-  if (window.YT && window.YT.Player) {
-    initPlayer();
-  } else if (!document.getElementById("yt-iframe-api")) {
-    const tag = document.createElement("script");
-    tag.id = "yt-iframe-api";
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.head.appendChild(tag);
-  }
-
   // Bấm nút ♪ để bật / tắt
   btn.addEventListener("click", () => {
-    if (playing) {
-      userPaused = true;
-      pause();
-    } else {
+    if (audio.paused) {
       userPaused = false;
       play();
+    } else {
+      userPaused = true;
+      audio.pause();
     }
   });
 
-  // Tự phát nhạc ngay lần đầu khách chạm / cuộn / bấm vào trang.
+  // Tự phát nhạc ngay lần đầu khách chạm / bấm vào trang.
   // (Trình duyệt chỉ cho phát tiếng sau một thao tác của người dùng.)
-  const events = ["pointerdown", "keydown", "touchstart", "scroll"];
+  const events = ["pointerdown", "keydown", "touchstart"];
   function autoStart(e) {
     if (e && e.target && e.target.closest && e.target.closest("#musicToggle")) return;
     events.forEach((ev) => window.removeEventListener(ev, autoStart));
-    if (!playing && !userPaused) play();
+    if (audio.paused) play();
   }
   events.forEach((ev) => window.addEventListener(ev, autoStart, { passive: true }));
+
+  // Tạm dừng khi khách chuyển sang ứng dụng khác, phát lại khi quay về
+  let pausedByHide = false;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && !audio.paused) { pausedByHide = true; audio.pause(); }
+    else if (!document.hidden && pausedByHide) { pausedByHide = false; play(); }
+  });
 })();
 
 /* ── 6. Hộp quà — nhấn để hiện QR ── */

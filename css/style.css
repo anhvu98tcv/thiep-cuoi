@@ -560,8 +560,6 @@ body {
 .music-toggle.playing .music-icon { animation: spin 3s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Trình phát nhạc YouTube ẩn (đặt ngoài màn hình nhưng vẫn phát được tiếng) */
-.yt-music { position: fixed; left: -9999px; top: -9999px; width: 200px; height: 120px; opacity: 0.001; pointer-events: none; }
 
 /* ─────────────── Màn bìa "Mở thiệp" ─────────────── */
 .intro-cover {
